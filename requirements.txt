@@ -1,0 +1,16 @@
+python-dotenv==0.21.1
+fastapi
+faiss-cpu
+uvicorn
+langchain
+requests
+openai
+tiktoken
+markdownify
+pandas
+markdown
+unstructured
+bs4
+redis
+jq
+pdfminer.six 

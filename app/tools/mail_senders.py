@@ -131,7 +131,7 @@ async def send_standard_invites():
             )
 
             logger.info(
-                "Sending invite to"
+                "Trying to send invite to"
                 f" {receiver_name} {receiver_last_name} [{receiver_pronouns}]"
                 f" ({receiver_email}) {receiver_id_prefix}-{receiver_id}"
             )
@@ -158,6 +158,11 @@ async def send_standard_invites():
                     patch = await mark_contact_as_standard_invite_sent(
                         contact["id"]
                     )
+                else:
+                    logger.error(f"Mailgun response : {res}")
+                    return {
+                        "status": "Error sending email",
+                    }
 
             except requests.exceptions.RequestException as error:
                 logger.error(error)

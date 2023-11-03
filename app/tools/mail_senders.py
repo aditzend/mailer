@@ -12,16 +12,17 @@ from tools.notion_retriever import (
     mark_contact_as_standard_invite_sent,
 )
 
+import sendgrid
+import os
+from sendgrid.helpers.mail import Mail, Email, To, Content
+
 logger = logging.getLogger("uvicorn")
 load_dotenv()
 
-SMTP_HOST = os.getenv("SMTP_HOST")
-SMTP_PORT = os.getenv("SMTP_PORT")
-SMTP_USER = os.getenv("SMTP_USER")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-SMTP_SENDER = os.getenv("SMTP_SENDER")
-MAILGUN_DOMAIN = os.getenv("MAILGUN_DOMAIN")
-MAILGUN_API_KEY = os.getenv("MAILGUN_API_KEY")
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+FROM_EMAIL = os.getenv("FROM_EMAIL")
+
+sg = sendgrid.SendGridAPIClient(api_key=SENDGRID_API_KEY)
 
 
 def send_plain_email(Mail: dict):
@@ -137,29 +138,36 @@ async def send_standard_invites():
             )
 
             try:
-                # Send email to current contact
-                res = requests.post(
-                    url=(
-                        f"https://api.mailgun.net/v3/{MAILGUN_DOMAIN}/messages"
-                    ),
-                    auth=("api", MAILGUN_API_KEY),
-                    data={
-                        "from": SMTP_SENDER,
-                        "to": [receiver_email],
-                        "subject": (
-                            f"{welcome_treatment} a SAIA {receiver_name}"
-                        ),
-                        "html": hydrated_template,
-                    },
-                    timeout=15,
+                # Send email to current contact using Sendgrid
+                message = Mail(
+                    from_email=FROM_EMAIL,
+                    to_emails=receiver_email,
+                    subject=f"{welcome_treatment} a SAIA {receiver_name}",
+                    html_content=hydrated_template,
                 )
+                res = sg.send(message)
+                # res = requests.post(
+                #     url=(
+                #         f"https://api.mailgun.net/v3/{MAILGUN_DOMAIN}/messages"
+                #     ),
+                #     auth=("api", MAILGUN_API_KEY),
+                #     data={
+                #         "from": SMTP_SENDER,
+                #         "to": [receiver_email],
+                #         "subject": (
+                #             f"{welcome_treatment} a SAIA {receiver_name}"
+                #         ),
+                #         "html": hydrated_template,
+                #     },
+                #     timeout=15,
+                # )
                 # Change funnel position in Notion if the email was sent
-                if res.ok:
+                if res.status_code == 202:
                     patch = await mark_contact_as_standard_invite_sent(
                         contact["id"]
                     )
                 else:
-                    logger.error(f"Mailgun response : {res}")
+                    logger.error(f"Sendgrid response : {res.status_code}")
                     return {
                         "status": "Error sending email",
                     }

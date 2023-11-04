@@ -71,6 +71,75 @@ async def get_send_standard_invite_contacts():
         return {"status": "Error getting contacts"}
 
 
+async def get_contacts_by_funnel_position(label_text: str):
+    """Gets all contacts from Notion that are labeled as 'Send standard invite'"""
+    logger.info("Getting contacts from Notion")
+    NOTION_API_KEY = os.getenv("NOTION_API_KEY")
+    NOTION_ONBOARDING_SUBMISSIONS_ID = os.getenv(
+        "NOTION_ONBOARDING_SUBMISSIONS_ID"
+    )
+    try:
+        res = requests.post(
+            url=f"https://api.notion.com/v1/databases/{NOTION_ONBOARDING_SUBMISSIONS_ID}/query",
+            headers={
+                "Authorization": "Bearer " + NOTION_API_KEY,
+                "Content-Type": "application/json",
+                "Notion-Version": "2022-06-28",
+            },
+            data=json.dumps(
+                {
+                    "filter": {
+                        "property": "Funnel position",
+                        "select": {
+                            "equals": label_text,
+                        },
+                    }
+                }
+            ),
+            timeout=15,
+        )
+        logger.info(f"Contacts from Notion : {res}")
+        return res.json()
+    except requests.exceptions.RequestException as error:
+        logger.error(error)
+        return {"status": "Error getting contacts"}
+
+
+async def change_funnel_position(id: str, label_text: str):
+    """Patch a contact"""
+    logger.info(f"Patching contact as {label_text}")
+    NOTION_API_KEY = os.getenv("NOTION_API_KEY")
+    NOTION_ONBOARDING_SUBMISSIONS_ID = os.getenv(
+        "NOTION_ONBOARDING_SUBMISSIONS_ID"
+    )
+    try:
+        res = requests.patch(
+            url="https://api.notion.com/v1/pages/" + id,
+            headers={
+                "Authorization": "Bearer " + NOTION_API_KEY,
+                "Content-Type": "application/json",
+                "Notion-Version": "2022-06-28",
+            },
+            data=json.dumps(
+                {
+                    "properties": {
+                        "Funnel position": {
+                            "select": {
+                                "name": label_text,
+                            },
+                        }
+                    }
+                }
+            ),
+            timeout=15,
+        )
+        logger.info(f"Contacts from Notion : {res}")
+        return res.json()
+    except requests.exceptions.RequestException as error:
+        logger.error(error)
+        return {"status": "Error patching contact"}
+
+
 async def mark_contact_as_standard_invite_sent(id: str):
     """Patch a contact as 'Standard invite sent'"""
     logger.info("Patching contact as 'Standard invite sent'")

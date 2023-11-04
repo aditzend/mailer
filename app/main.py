@@ -17,6 +17,7 @@ from tools.mail_senders import (
     send_plain_email,
     send_html_email,
     send_standard_invites,
+    send_emails_with_path_template,
 )
 from tools.notion_retriever import get_funnel_data
 
@@ -118,4 +119,26 @@ async def send_invites():
     Send invites
     """
     result = await send_standard_invites()
+    return result
+
+
+# Define a Pydantic model for the request body
+class EmailData(BaseModel):
+    template_path: str
+    subject: str
+    from_label_text: str
+    success_label_text: str
+
+
+@app.post("/v1/send_emails_with_path_template")
+async def send_emails_with_path_template_wrapper(email_data: EmailData):
+    """
+    Send emails with path template
+    """
+    result = await send_emails_with_path_template(
+        template_path=email_data.template_path,
+        subject=email_data.subject,
+        from_label_text=email_data.from_label_text,
+        success_label_text=email_data.success_label_text,
+    )
     return result

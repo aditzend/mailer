@@ -17,6 +17,7 @@ from tools.mail_senders import (
     send_plain_email,
     send_html_email,
     send_standard_invites,
+    send_templated_emails,
 )
 from tools.notion_retriever import get_funnel_data
 from tools.file_cleaners import transform_and_save_xlsx
@@ -119,6 +120,35 @@ async def send_invites():
     Send invites
     """
     result = await send_standard_invites()
+    return result
+
+
+# create a pydantic class named SendTemplatedEmail for the request body
+# template_path, subject, from_label_text, success_label_text
+class SendTemplatedEmailsBody(BaseModel):
+    """
+    SendTemplatedEmails model
+    """
+
+    template_path: str
+    subject: str
+    from_label_text: str
+    success_label_text: str
+
+
+@app.post("/v1/send_templated_emails")
+async def send_t_emails(send_t_emails_body: SendTemplatedEmailsBody):
+    """
+    Send templated email
+    """
+    # extract the file name from the request body
+    template_path = send_t_emails_body.template_path
+    subject = send_t_emails_body.subject
+    from_label_text = send_t_emails_body.from_label_text
+    success_label_text = send_t_emails_body.success_label_text
+    result = await send_templated_emails(
+        template_path, subject, from_label_text, success_label_text
+    )
     return result
 
 

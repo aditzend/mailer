@@ -7,6 +7,7 @@ import ssl
 import logging
 from dotenv import load_dotenv
 from html_templates.black_transactional import template_roon, template_test
+from html_templates.saiaconf import template_saiaconf_1
 from tools.notion_retriever import (
     get_send_standard_invite_contacts,
     mark_contact_as_standard_invite_sent,
@@ -92,19 +93,13 @@ async def send_standard_invites():
         contacts = await get_send_standard_invite_contacts()
         for contact in contacts["results"]:
             receiver_email = contact["properties"]["Email"]["email"]
-            receiver_name = contact["properties"]["Name"]["rich_text"][0][
+            receiver_name = contact["properties"]["Name"]["rich_text"][0]["plain_text"]
+            receiver_last_name = contact["properties"]["Last name"]["rich_text"][0][
                 "plain_text"
             ]
-            receiver_last_name = contact["properties"]["Last name"][
-                "rich_text"
-            ][0]["plain_text"]
             receiver_id = contact["properties"]["ID"]["unique_id"]["number"]
-            receiver_id_prefix = contact["properties"]["ID"]["unique_id"][
-                "prefix"
-            ]
-            receiver_pronouns = contact["properties"]["Pronouns"]["select"][
-                "name"
-            ]
+            receiver_id_prefix = contact["properties"]["ID"]["unique_id"]["prefix"]
+            receiver_pronouns = contact["properties"]["Pronouns"]["select"]["name"]
             receiver_code = f"{receiver_id_prefix}-{receiver_id}"
 
             welcome_treatment = "Bienvenida"
@@ -163,9 +158,7 @@ async def send_standard_invites():
                 # )
                 # Change funnel position in Notion if the email was sent
                 if res.status_code == 202:
-                    patch = await mark_contact_as_standard_invite_sent(
-                        contact["id"]
-                    )
+                    patch = await mark_contact_as_standard_invite_sent(contact["id"])
                 else:
                     logger.error(f"Sendgrid response : {res.status_code}")
                     return {
@@ -183,4 +176,36 @@ async def send_standard_invites():
         logger.error(error)
         return {
             "status": "Error getting contacts",
+        }
+
+
+async def send_templated_emails(
+    template_path: str, subject: str, from_label_text: str, success_label_text: str
+):
+    """Send templated email"""
+    logger.info(f"Sending templated email to {subject}")
+    hydrated_template = template_saiaconf_1.substitute(
+        receiver_name="Alexander", gender_casing_single="o"
+    )
+
+    res = requests.post(
+        url="https://api.mailgun.net/v3/saia.ar/messages",
+        auth=("api", MAILGUN_API_KEY),
+        data={
+            "from": Mail.sender,
+            "to": [Mail.receiver],
+            "subject": Mail.subject,
+            "html": hydrated_template,
+        },
+        timeout=15,
+    )
+
+    logger.info(f"Mailgun response : {res}")
+    if res.ok:
+        return {
+            "status": "OK",
+        }
+    else:
+        return {
+            "status": "Error sending email",
         }

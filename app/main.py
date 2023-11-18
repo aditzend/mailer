@@ -130,7 +130,7 @@ class SendTemplatedEmailsBody(BaseModel):
     SendTemplatedEmails model
     """
 
-    template_path: str
+    template_name: str
     subject: str
     from_label_text: str
     success_label_text: str
@@ -142,12 +142,12 @@ async def send_t_emails(send_t_emails_body: SendTemplatedEmailsBody):
     Send templated email
     """
     # extract the file name from the request body
-    template_path = send_t_emails_body.template_path
+    template_name = send_t_emails_body.template_name
     subject = send_t_emails_body.subject
     from_label_text = send_t_emails_body.from_label_text
     success_label_text = send_t_emails_body.success_label_text
     result = await send_templated_emails(
-        template_path, subject, from_label_text, success_label_text
+        template_name, subject, from_label_text, success_label_text
     )
     return result
 

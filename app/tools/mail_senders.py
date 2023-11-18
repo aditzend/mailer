@@ -12,7 +12,7 @@ from tools.notion_retriever import (
     get_send_standard_invite_contacts,
     mark_contact_as_standard_invite_sent,
 )
-
+from string import Template
 import sendgrid
 import os
 from sendgrid.helpers.mail import Mail, Email, To, Content
@@ -180,32 +180,34 @@ async def send_standard_invites():
 
 
 async def send_templated_emails(
-    template_path: str, subject: str, from_label_text: str, success_label_text: str
+    template_name: str, subject: str, from_label_text: str, success_label_text: str
 ):
     """Send templated email"""
     logger.info(f"Sending templated email to {subject}")
-    hydrated_template = template_saiaconf_1.substitute(
-        receiver_name="Alexander", gender_casing_single="o"
+    gcs = "a"
+    subject_template = Template(subject)
+    # load template from local storage
+    template_path = f"../data/templates/{template_name}.html"
+    # load file contents into a string
+    with open(template_path, "r") as template_file:
+        body_template = template_file.read()
+    body_template = Template(body_template)
+    hydrated_subject = subject_template.substitute(receiver_name="Alexander", gcs=gcs)
+    hydrated_body = body_template.substitute(receiver_name="Alexander", gcs="o")
+
+    # # Create a Mail object
+    mail = Mail(
+        from_email=Email("sysadmin@saia.ar"),
+        to_emails=To("alexanderditzend@gmail.com"),
+        subject=hydrated_subject,
+        html_content=Content("text/html", hydrated_body),
     )
 
-    res = requests.post(
-        url="https://api.mailgun.net/v3/saia.ar/messages",
-        auth=("api", MAILGUN_API_KEY),
-        data={
-            "from": Mail.sender,
-            "to": [Mail.receiver],
-            "subject": Mail.subject,
-            "html": hydrated_template,
-        },
-        timeout=15,
-    )
-
-    logger.info(f"Mailgun response : {res}")
-    if res.ok:
-        return {
-            "status": "OK",
-        }
-    else:
-        return {
-            "status": "Error sending email",
-        }
+    # # Send the email
+    try:
+        response = sg.client.mail.send.post(request_body=mail.get())
+        print(response.status_code)
+        print(response.body)
+        print(response.headers)
+    except Exception as e:
+        logger.error(e)

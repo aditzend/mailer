@@ -320,7 +320,7 @@ template_saiaconf_1 = Template(
                                       margin-bottom: 0;
                                     "
                                   >
-                                    $main_header
+                                    $receiver_name
                                   </h1>
                                 </td>
                               </tr>
@@ -354,7 +354,7 @@ template_saiaconf_1 = Template(
                                       mso-line-height-alt: 24px;
                                     "
                                   >
-                                    <p style="margin: 0">$message</p>
+                                    <p style="margin: 0">$gender_casing_single</p>
                                   </div>
                                 </td>
                               </tr>
@@ -397,7 +397,6 @@ template_saiaconf_1 = Template(
                                         margin-bottom: 0;
                                       "
                                     >
-                                      $code
                                     </h3>
 
                                     <!--[if mso]></center></v:textbox></v:roundrect><![endif]-->

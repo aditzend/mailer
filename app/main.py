@@ -19,6 +19,7 @@ from tools.mail_senders import (
     send_standard_invites,
 )
 from tools.notion_retriever import get_funnel_data
+from tools.file_cleaners import transform_and_save_xlsx
 
 load_dotenv()
 logger = logging.getLogger("uvicorn")
@@ -118,4 +119,24 @@ async def send_invites():
     Send invites
     """
     result = await send_standard_invites()
+    return result
+
+
+# create a pydantic class for the request body
+class Xlsx(BaseModel):
+    """
+    Xlsx model
+    """
+
+    file_name: str
+
+
+@app.post("/v1/transform_xlsx")
+async def transform_xlsx(xlsx: Xlsx):
+    """
+    Transform xlsx
+    """
+    # extract the file name from the request body
+    file_name = xlsx.file_name
+    result = await transform_and_save_xlsx(file_name=file_name)
     return result

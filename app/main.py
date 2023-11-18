@@ -138,5 +138,5 @@ async def transform_xlsx(xlsx: Xlsx):
     """
     # extract the file name from the request body
     file_name = xlsx.file_name
-    result = await transform_and_save_xlsx(file_name=file_name)
+    result = await transform_and_save_xlsx(file_name="i0")
     return result

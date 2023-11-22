@@ -183,31 +183,60 @@ async def send_templated_emails(
     template_name: str, subject: str, from_label_text: str, success_label_text: str
 ):
     """Send templated email"""
-    logger.info(f"Sending templated email to {subject}")
-    gcs = "a"
-    subject_template = Template(subject)
-    # load template from local storage
-    template_path = f"../data/templates/{template_name}.html"
-    # load file contents into a string
-    with open(template_path, "r") as template_file:
-        body_template = template_file.read()
-    body_template = Template(body_template)
-    hydrated_subject = subject_template.substitute(receiver_name="Alexander", gcs=gcs)
-    hydrated_body = body_template.substitute(receiver_name="Alexander", gcs="o")
+    logger.info(f"Trying to send templated email to {subject}")
 
-    # # Create a Mail object
-    mail = Mail(
-        from_email=Email("sysadmin@saia.ar"),
-        to_emails=To("alexanderditzend@gmail.com"),
-        subject=hydrated_subject,
-        html_content=Content("text/html", hydrated_body),
-    )
-
-    # # Send the email
     try:
-        response = sg.client.mail.send.post(request_body=mail.get())
-        print(response.status_code)
-        print(response.body)
-        print(response.headers)
-    except Exception as e:
-        logger.error(e)
+        contacts = await get_contacts_by_tag(tag=from_label_text)
+        for contact in contacts["results"]:
+            receiver_email = contact["properties"]["Email"]["email"]
+            receiver_name = contact["properties"]["Name"]["rich_text"][0]["plain_text"]
+            receiver_last_name = contact["properties"]["Last name"]["rich_text"][0][
+                "plain_text"
+            ]
+            receiver_id = contact["properties"]["ID"]["unique_id"]["number"]
+            receiver_id_prefix = contact["properties"]["ID"]["unique_id"]["prefix"]
+            receiver_pronouns = contact["properties"]["Pronouns"]["select"]["name"]
+            receiver_code = f"{receiver_id_prefix}-{receiver_id}"
+
+            gcs = "a"
+
+            if receiver_pronouns == "he/him (el)":
+                gcs = "o"
+
+            if (
+                receiver_pronouns != "she/her (ella)"
+                and receiver_pronouns != "he/him (el)"
+            ):
+                gcs = "e"
+
+            subject_template = Template(subject)
+            # load template from local storage
+            template_path = f"../data/templates/{template_name}.html"
+            # load file contents into a string
+            with open(template_path, "r") as template_file:
+                body_template = template_file.read()
+            body_template = Template(body_template)
+            hydrated_subject = subject_template.substitute(
+                receiver_name="Alexander", gcs=gcs
+            )
+            hydrated_body = body_template.substitute(receiver_name="Alexander", gcs="o")
+
+            # # Create a Mail object
+            mail = Mail(
+                from_email=Email("sysadmin@saia.ar"),
+                to_emails=To("alexanderditzend@gmail.com"),
+                subject=hydrated_subject,
+                html_content=Content("text/html", hydrated_body),
+            )
+
+            # # Send the email
+            try:
+                sg.client.mail.send.post(request_body=mail.get())
+            except Exception as e:
+                logger.error(e)
+
+    except KeyError as error:
+        logger.error(error)
+        return {
+            "status": "Error getting contacts",
+        }

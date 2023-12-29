@@ -15,6 +15,12 @@ RUN pip install --no-cache-dir --upgrade uvicorn
 RUN pip install --no-cache-dir --upgrade requests
 RUN pip install --no-cache-dir --upgrade notion
 RUN pip install --no-cache-dir --upgrade schedule
+RUN pip install --no-cache-dir --upgrade aioschedule
+RUN pip install --no-cache-dir --upgrade sentry_sdk
+RUN pip install --no-cache-dir --upgrade qrcode
+RUN pip install --no-cache-dir --upgrade sendgrid
+RUN pip install --no-cache-dir --upgrade pandas
+
 
 
 

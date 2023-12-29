@@ -60,7 +60,7 @@ async def get_send_standard_invite_contacts():
             ),
             timeout=15,
         )
-        logger.info(f"Contacts from Notion : {res}")
+        logger.info(f"Contacts from Notion : {res.json()}")
         return res.json()
     except requests.exceptions.RequestException as error:
         logger.error(error)
@@ -93,7 +93,7 @@ async def mark_contact_as_standard_invite_sent(id: str):
             ),
             timeout=15,
         )
-        logger.info(f"Contacts from Notion : {res}")
+        logger.info(f"Contacts from Notion : {res.json()}")
         return res.json()
     except requests.exceptions.RequestException as error:
         logger.error(error)

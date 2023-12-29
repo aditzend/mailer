@@ -1,0 +1,1 @@
+{\"_and\": [{\"events\": {\"_none\": {\"message\": {\"_eq\": \"qr ticket\"}}}},{\"events\": {\"_none\": {\"message\": {\"_eq\": \"qr ticket sent by email\"}}}},{\"saiaconf_stream\": {\"_eq\": false}}]}
